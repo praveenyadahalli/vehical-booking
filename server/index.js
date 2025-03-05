@@ -1,13 +1,16 @@
-const express = require("express");
-const app = express();
-const cors = require("cors");
-const pool = require("./db-connect");
+const express = require('express');
+const vehicleRoutes = require('./routes/vehicleRoutes');
+const bookingRoutes = require('./routes/bookingRoutes');
 
-//middleware
-app.use(cors());
+const app = express();
 app.use(express.json());
 
+// Use routes
+app.use('/api', vehicleRoutes);
+app.use('/api', bookingRoutes);
 
-app.listen(5000, () => {
-  console.log("server has started on port 5000");
+// Start the server
+const PORT = 5000;
+app.listen(PORT, () => {
+  console.log(`Server is running on port ${PORT}`);
 });
