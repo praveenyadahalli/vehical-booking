@@ -20,3 +20,8 @@ export const submitBooking = async (bookingData) => {
   });
   return response.json();
 };
+
+export const fetchAllVehiclesTypes = async () => {
+  const response = await fetch(`${API_BASE_URL}/vehicle-types/all`);
+  return response.json();
+};

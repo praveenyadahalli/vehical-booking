@@ -1,7 +1,7 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import VehicleTypeSelector from "../components/VehicleTypeSelector";
 import VehicleList from "../components/VehicleList";
-import { submitBooking } from "../api"; // ✅ Import the API function
+import { submitBooking, fetchAllVehiclesTypes } from "../api"; // ✅ Import API function
 import "./Home.css";
 
 const Home = () => {
@@ -9,12 +9,28 @@ const Home = () => {
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [wheels, setWheels] = useState(null);
+  const [wheelOptions, setWheelOptions] = useState([]); // ✅ Store dynamic wheel options
   const [selectedTypeId, setSelectedTypeId] = useState(null);
   const [selectedVehicleId, setSelectedVehicleId] = useState(null);
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+
+  // Fetch unique wheel options dynamically
+  useEffect(() => {
+    const fetchWheels = async () => {
+      try {
+        const vehicles = await fetchAllVehiclesTypes();
+        const uniqueWheels = [...new Set(vehicles.map((v) => v.wheels))]; // ✅ Extract distinct wheels
+        setWheelOptions(uniqueWheels);
+      } catch (err) {
+        setError("Failed to fetch wheel options.");
+      }
+    };
+
+    fetchWheels();
+  }, []);
 
   const handleNext = () => setStep((prevStep) => prevStep + 1);
 
@@ -98,26 +114,22 @@ const Home = () => {
       {step === 2 && (
         <div>
           <h2>Step 2: Select Number of Wheels</h2>
-          <label>
-            <input
-              type="radio"
-              name="wheels"
-              value={2}
-              checked={wheels === 2}
-              onChange={() => handleWheelsChange(2)}
-            />{" "}
-            2 Wheels
-          </label>
-          <label>
-            <input
-              type="radio"
-              name="wheels"
-              value={4}
-              checked={wheels === 4}
-              onChange={() => handleWheelsChange(4)}
-            />{" "}
-            4 Wheels
-          </label>
+          {wheelOptions.length > 0 ? (
+            wheelOptions.map((wheelCount) => (
+              <label key={wheelCount}>
+                <input
+                  type="radio"
+                  name="wheels"
+                  value={wheelCount}
+                  checked={wheels === wheelCount}
+                  onChange={() => handleWheelsChange(wheelCount)}
+                />{" "}
+                {wheelCount} Wheels
+              </label>
+            ))
+          ) : (
+            <p>Loading wheel options...</p>
+          )}
         </div>
       )}
 
