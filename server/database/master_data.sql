@@ -1,10 +1,10 @@
 -- Seed VehicleTypes Table
-INSERT INTO VehicleTypes (name, wheels) VALUES
+INSERT INTO vehicle_types (name, wheels) VALUES
 ('Car', 4),
 ('Bike', 2);
 
 -- Seed Vehicles Table
-INSERT INTO Vehicles (name, typeId) VALUES
+INSERT INTO vehicles (name, type_id) VALUES
 ('Hatchback', 1), -- Car type
 ('SUV', 1),       -- Car type
 ('Sedan', 1),     -- Car type

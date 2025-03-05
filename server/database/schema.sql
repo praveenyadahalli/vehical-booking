@@ -11,27 +11,27 @@ SET row_security = off;
 SET search_path TO public;
 
 -- Create VehicleTypes Table
-CREATE TABLE VehicleTypes (
-    id INT AUTO_INCREMENT PRIMARY KEY,
+CREATE TABLE vehicle_types (
+    id SERIAL PRIMARY KEY,
     name VARCHAR(255) NOT NULL,
     wheels INT NOT NULL
 );
 
 -- Create Vehicles Table
-CREATE TABLE Vehicles (
-    id INT AUTO_INCREMENT PRIMARY KEY,
+CREATE TABLE vehicles (
+    id SERIAL PRIMARY KEY,
     name VARCHAR(255) NOT NULL,
-    typeId INT,
-    FOREIGN KEY (typeId) REFERENCES VehicleTypes(id)
+    type_id INT,
+    FOREIGN KEY (type_id) REFERENCES vehicle_types(id)
 );
 
 -- Create Bookings Table
-CREATE TABLE Bookings (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    firstName VARCHAR(255) NOT NULL,
-    lastName VARCHAR(255) NOT NULL,
-    vehicleId INT,
-    startDate DATE NOT NULL,
-    endDate DATE NOT NULL,
-    FOREIGN KEY (vehicleId) REFERENCES Vehicles(id)
+CREATE TABLE bookings (
+    id SERIAL PRIMARY KEY,
+    first_name VARCHAR(255) NOT NULL,
+    last_name VARCHAR(255) NOT NULL,
+    vehicle_id INT,
+    start_date DATE NOT NULL,
+    end_date DATE NOT NULL,
+    FOREIGN KEY (vehicle_id) REFERENCES vehicles(id)
 );
