@@ -6,9 +6,16 @@ const BookingForm = ({ vehicleId }) => {
   const [lastName, setLastName] = useState('');
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
+  const [error, setError] = useState('');
+  const [successMessage, setSuccessMessage] = useState('');
+  const [loading, setLoading] = useState(false);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setLoading(true);
+    setError('');
+    setSuccessMessage('');
+
     const bookingData = {
       first_name: firstName,
       last_name: lastName,
@@ -16,9 +23,17 @@ const BookingForm = ({ vehicleId }) => {
       start_date: startDate,
       end_date: endDate,
     };
-    const response = await submitBooking(bookingData);
-    console.log('Booking submitted:', response);
-    alert('Booking submitted successfully!');
+
+    try {
+      const response = await submitBooking(bookingData);
+      console.log('Booking submitted:', response);
+      setSuccessMessage('Booking submitted successfully!');
+    } catch (error) {
+      console.error('Booking Error:', error.message);
+      setError(error.message || "An unexpected error occurred."); // ✅ Show correct error
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -59,7 +74,13 @@ const BookingForm = ({ vehicleId }) => {
           required
         />
       </label>
-      <button type="submit">Submit Booking</button>
+
+      {error && <div className="error-message" style={{ color: "red", fontWeight: "bold" }}>{error}</div>}
+      {successMessage && <div className="success-message" style={{ color: "green", fontWeight: "bold" }}>{successMessage}</div>}
+
+      <button type="submit" disabled={loading}>
+        {loading ? "Submitting..." : "Submit Booking"}
+      </button>
     </form>
   );
 };

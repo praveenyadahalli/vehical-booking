@@ -11,14 +11,33 @@ export const fetchVehiclesByType = async (typeId) => {
 };
 
 export const submitBooking = async (bookingData) => {
-  const response = await fetch(`${API_BASE_URL}/bookings`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify(bookingData),
-  });
-  return response.json();
+  try {
+    const response = await fetch(`${API_BASE_URL}/bookings`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(bookingData),
+    });
+
+    // Check if the response is OK and if it has content
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(errorText || "Booking request failed.");
+    }
+
+    // Check if the response has content before calling .json()
+    const contentType = response.headers.get("content-type");
+    if (contentType && contentType.includes("application/json")) {
+      const data = await response.json();
+      return data;
+    } else {
+      throw new Error("Response is not JSON.");
+    }
+  } catch (error) {
+    console.error("Error submitting booking:", error.message);
+    throw error; // Ensure error propagates
+  }
 };
 
 export const fetchAllVehiclesTypes = async () => {

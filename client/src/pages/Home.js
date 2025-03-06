@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from "react";
 import VehicleTypeSelector from "../components/VehicleTypeSelector";
 import VehicleList from "../components/VehicleList";
-import { submitBooking, fetchAllVehiclesTypes } from "../api"; 
-import "./Home.css";
+import { submitBooking, fetchAllVehiclesTypes } from "../api";
+import "../styles/Home.css";
 
 const Home = () => {
   const [step, setStep] = useState(1);
@@ -18,11 +18,12 @@ const Home = () => {
   const [error, setError] = useState(null);
   const [validationError, setValidationError] = useState("");
 
+  // Fetch wheel options on component mount
   useEffect(() => {
     const fetchWheels = async () => {
       try {
         const vehicles = await fetchAllVehiclesTypes();
-        const uniqueWheels = [...new Set(vehicles.map((v) => v.wheels))]; 
+        const uniqueWheels = [...new Set(vehicles.map((v) => v.wheels))];
         setWheelOptions(uniqueWheels);
       } catch (err) {
         setError("Failed to fetch wheel options.");
@@ -32,6 +33,7 @@ const Home = () => {
     fetchWheels();
   }, []);
 
+  // Handle "Next" button click
   const handleNext = () => {
     if (step === 1 && (!firstName.trim() || !lastName.trim())) {
       setValidationError("First Name and Last Name are required.");
@@ -54,32 +56,40 @@ const Home = () => {
     setStep((prevStep) => prevStep + 1);
   };
 
+  // Handle booking submission
   const handleBookingSubmit = async (e) => {
     e.preventDefault();
     if (!startDate || !endDate) {
       setValidationError("Both start and end dates are required.");
       return;
     }
-
+  
     setLoading(true);
     setValidationError("");
-
+    setError(null);
+  
     try {
       const bookingData = {
-        firstName,
-        lastName,
-        wheels,
-        vehicleType: selectedTypeId,
-        vehicleId: selectedVehicleId,
-        startDate,
-        endDate,
+        first_name: firstName,
+        last_name: lastName,
+        vehicle_id: selectedVehicleId,
+        start_date: startDate,
+        end_date: endDate,
       };
-
-      await submitBooking(bookingData);
+  
+      const response = await submitBooking(bookingData);
       alert("Booking successful!");
       setStep(1); // Reset form after successful submission
+      // Reset all fields
+      setFirstName("");
+      setLastName("");
+      setWheels(null);
+      setSelectedTypeId(null);
+      setSelectedVehicleId(null);
+      setStartDate("");
+      setEndDate("");
     } catch (error) {
-      setError("Failed to submit booking. Please try again.");
+      setError(error.message || "Failed to submit booking. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -98,6 +108,7 @@ const Home = () => {
               type="text"
               value={firstName}
               onChange={(e) => setFirstName(e.target.value)}
+              required
             />
           </label>
           <label>
@@ -106,6 +117,7 @@ const Home = () => {
               type="text"
               value={lastName}
               onChange={(e) => setLastName(e.target.value)}
+              required
             />
           </label>
           {validationError && <p className="error">{validationError}</p>}
