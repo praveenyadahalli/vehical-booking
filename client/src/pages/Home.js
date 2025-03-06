@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import VehicleTypeSelector from "../components/VehicleTypeSelector";
 import VehicleList from "../components/VehicleList";
-import { submitBooking, fetchAllVehiclesTypes } from "../api"; // ✅ Import API function
+import { submitBooking, fetchAllVehiclesTypes } from "../api"; 
 import "./Home.css";
 
 const Home = () => {
@@ -9,20 +9,20 @@ const Home = () => {
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [wheels, setWheels] = useState(null);
-  const [wheelOptions, setWheelOptions] = useState([]); // ✅ Store dynamic wheel options
+  const [wheelOptions, setWheelOptions] = useState([]);
   const [selectedTypeId, setSelectedTypeId] = useState(null);
   const [selectedVehicleId, setSelectedVehicleId] = useState(null);
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [validationError, setValidationError] = useState("");
 
-  // Fetch unique wheel options dynamically
   useEffect(() => {
     const fetchWheels = async () => {
       try {
         const vehicles = await fetchAllVehiclesTypes();
-        const uniqueWheels = [...new Set(vehicles.map((v) => v.wheels))]; // ✅ Extract distinct wheels
+        const uniqueWheels = [...new Set(vehicles.map((v) => v.wheels))]; 
         setWheelOptions(uniqueWheels);
       } catch (err) {
         setError("Failed to fetch wheel options.");
@@ -32,50 +32,53 @@ const Home = () => {
     fetchWheels();
   }, []);
 
-  const handleNext = () => setStep((prevStep) => prevStep + 1);
+  const handleNext = () => {
+    if (step === 1 && (!firstName.trim() || !lastName.trim())) {
+      setValidationError("First Name and Last Name are required.");
+      return;
+    }
+    if (step === 2 && wheels === null) {
+      setValidationError("Please select the number of wheels.");
+      return;
+    }
+    if (step === 3 && selectedTypeId === null) {
+      setValidationError("Please select a vehicle type.");
+      return;
+    }
+    if (step === 4 && selectedVehicleId === null) {
+      setValidationError("Please select a vehicle model.");
+      return;
+    }
 
-  const handleWheelsChange = (value) => {
-    setWheels(value);
-    setStep(3);
-  };
-
-  const handleTypeSelect = (typeId) => {
-    setSelectedTypeId(typeId);
-    setStep(4);
-  };
-
-  const handleVehicleSelect = (vehicleId) => {
-    console.log("Vehicle Selected:", vehicleId);
-    setSelectedVehicleId(vehicleId);
-    setTimeout(() => {
-      setStep(5);
-    }, 100);
+    setValidationError("");
+    setStep((prevStep) => prevStep + 1);
   };
 
   const handleBookingSubmit = async (e) => {
     e.preventDefault();
-    setLoading(true);
-    setError(null);
+    if (!startDate || !endDate) {
+      setValidationError("Both start and end dates are required.");
+      return;
+    }
 
-    const bookingData = {
-      first_name: firstName,
-      last_name: lastName,
-      vehicle_id: selectedVehicleId,
-      start_date: startDate,
-      end_date: endDate,
-    };
+    setLoading(true);
+    setValidationError("");
 
     try {
-      const response = await submitBooking(bookingData);
-      console.log("Booking Response:", response);
+      const bookingData = {
+        firstName,
+        lastName,
+        wheels,
+        vehicleType: selectedTypeId,
+        vehicleId: selectedVehicleId,
+        startDate,
+        endDate,
+      };
 
-      if (response.error) {
-        setError(response.error);
-      } else {
-        alert("Booking submitted successfully!");
-        setStep(1); // Reset the form after successful submission
-      }
-    } catch (err) {
+      await submitBooking(bookingData);
+      alert("Booking successful!");
+      setStep(1); // Reset form after successful submission
+    } catch (error) {
       setError("Failed to submit booking. Please try again.");
     } finally {
       setLoading(false);
@@ -90,23 +93,22 @@ const Home = () => {
         <div>
           <h2>Step 1: Enter Your Name</h2>
           <label>
-            First Name:
+            First Name <span className="required">*</span>:
             <input
               type="text"
               value={firstName}
               onChange={(e) => setFirstName(e.target.value)}
-              required
             />
           </label>
           <label>
-            Last Name:
+            Last Name <span className="required">*</span>:
             <input
               type="text"
               value={lastName}
               onChange={(e) => setLastName(e.target.value)}
-              required
             />
           </label>
+          {validationError && <p className="error">{validationError}</p>}
           <button onClick={handleNext}>Next</button>
         </div>
       )}
@@ -116,13 +118,13 @@ const Home = () => {
           <h2>Step 2: Select Number of Wheels</h2>
           {wheelOptions.length > 0 ? (
             wheelOptions.map((wheelCount) => (
-              <label key={wheelCount}>
+              <label key={wheelCount} className="radio-label">
                 <input
                   type="radio"
                   name="wheels"
                   value={wheelCount}
                   checked={wheels === wheelCount}
-                  onChange={() => handleWheelsChange(wheelCount)}
+                  onChange={() => setWheels(wheelCount)}
                 />{" "}
                 {wheelCount} Wheels
               </label>
@@ -130,20 +132,26 @@ const Home = () => {
           ) : (
             <p>Loading wheel options...</p>
           )}
+          {validationError && <p className="error">{validationError}</p>}
+          <button onClick={handleNext}>Next</button>
         </div>
       )}
 
       {step === 3 && (
         <div>
           <h2>Step 3: Select Vehicle Type</h2>
-          <VehicleTypeSelector wheels={wheels} onSelect={handleTypeSelect} />
+          <VehicleTypeSelector wheels={wheels} onSelect={setSelectedTypeId} />
+          {validationError && <p className="error">{validationError}</p>}
+          <button onClick={handleNext}>Next</button>
         </div>
       )}
 
       {step === 4 && (
         <div>
           <h2>Step 4: Select Vehicle Model</h2>
-          <VehicleList typeId={selectedTypeId} onSelect={handleVehicleSelect} />
+          <VehicleList typeId={selectedTypeId} onSelect={setSelectedVehicleId} />
+          {validationError && <p className="error">{validationError}</p>}
+          <button onClick={handleNext}>Next</button>
         </div>
       )}
 
@@ -152,7 +160,7 @@ const Home = () => {
           <h2>Step 5: Select Date Range</h2>
           <form onSubmit={handleBookingSubmit}>
             <label>
-              Start Date:
+              Start Date <span className="required">*</span>:
               <input
                 type="date"
                 value={startDate}
@@ -161,7 +169,7 @@ const Home = () => {
               />
             </label>
             <label>
-              End Date:
+              End Date <span className="required">*</span>:
               <input
                 type="date"
                 value={endDate}
@@ -169,7 +177,7 @@ const Home = () => {
                 required
               />
             </label>
-            {error && <p style={{ color: "red" }}>{error}</p>}
+            {error && <p className="error">{error}</p>}
             <button type="submit" disabled={loading}>
               {loading ? "Submitting..." : "Submit Booking"}
             </button>
