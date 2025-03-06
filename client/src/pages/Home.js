@@ -1,7 +1,11 @@
 import React, { useState, useEffect } from "react";
-import VehicleTypeSelector from "../components/VehicleTypeSelector";
-import VehicleList from "../components/VehicleList";
-import { submitBooking, fetchAllVehiclesTypes } from "../api";
+import Step1NameForm from "../components/Home/Step1NameForm";
+import Step2WheelSelector from "../components/Home/Step2WheelSelector";
+import Step3VehicleTypeSelector from "../components/Home/Step3VehicleTypeSelector";
+import Step4VehicleList from "../components/Home/Step4VehicleList";
+import Step5DatePicker from "../components/Home/Step5DatePicker";
+import { fetchAllVehiclesTypes, submitBooking } from "../api";
+import { validateDateRange } from "../helpers/validators"; // Import validation functions
 import "../styles/Home.css";
 
 const Home = () => {
@@ -33,11 +37,6 @@ const Home = () => {
     fetchWheels();
   }, []);
 
-  // Helper function to validate alphabetic input
-  const validateAlphabeticInput = (value) => {
-    return /^[A-Za-z]+$/.test(value); // Allows only letters (no numbers or special characters)
-  };
-
   // Handle "Next" button click
   const handleNext = () => {
     if (step === 1 && (!firstName.trim() || !lastName.trim())) {
@@ -65,20 +64,10 @@ const Home = () => {
   const handleBookingSubmit = async (e) => {
     e.preventDefault();
 
-    // Validate date range
-    if (!startDate || !endDate) {
-      setValidationError("Both start and end dates are required.");
-      return;
-    }
-
-    const today = new Date().toISOString().split("T")[0];
-    if (startDate < today) {
-      setValidationError("Start date cannot be in the past.");
-      return;
-    }
-
-    if (endDate < startDate) {
-      setValidationError("End date must be on or after the start date.");
+    // Validate date range using the helper function
+    const dateError = validateDateRange(startDate, endDate);
+    if (dateError) {
+      setValidationError(dateError); // Set validation error state
       return;
     }
 
@@ -118,129 +107,58 @@ const Home = () => {
       <h1>Vehicle Booking</h1>
 
       {step === 1 && (
-        <div>
-          <h2>Step 1: Enter Your Name</h2>
-          <label>
-            First Name <span className="required">*</span>:
-            <input
-              type="text"
-              value={firstName}
-              onChange={(e) => {
-                const value = e.target.value;
-                if ((validateAlphabeticInput(value) || value === "") && value.length <= 15) {
-                  setFirstName(value);
-                }
-              }}
-              maxLength={15} // Limit to 15 characters
-              required
-            />
-          </label>
-          <label>
-            Last Name <span className="required">*</span>:
-            <input
-              type="text"
-              value={lastName}
-              onChange={(e) => {
-                const value = e.target.value;
-                if ((validateAlphabeticInput(value) || value === "") && value.length <= 15) {
-                  setLastName(value);
-                }
-              }}
-              maxLength={15} // Limit to 15 characters
-              required
-            />
-          </label>
-          {validationError && <p className="error">{validationError}</p>}
-          <button onClick={handleNext}>Next</button>
-        </div>
+        <Step1NameForm
+          firstName={firstName}
+          setFirstName={setFirstName}
+          lastName={lastName}
+          setLastName={setLastName}
+          validationError={validationError}
+          onNext={handleNext}
+        />
       )}
 
       {step === 2 && (
-        <div>
-          <h2>Step 2: Select Number of Wheels</h2>
-          {wheelOptions.length > 0 ? (
-            wheelOptions.map((wheelCount) => (
-              <label key={wheelCount} className="radio-label">
-                <input
-                  type="radio"
-                  name="wheels"
-                  value={wheelCount}
-                  checked={wheels === wheelCount}
-                  onChange={() => setWheels(wheelCount)}
-                />{" "}
-                {wheelCount} Wheels
-              </label>
-            ))
-          ) : (
-            <p>Loading wheel options...</p>
-          )}
-          {validationError && <p className="error">{validationError}</p>}
-          <button onClick={handleNext}>Next</button>
-        </div>
+        <Step2WheelSelector
+          wheels={wheels}
+          setWheels={setWheels}
+          wheelOptions={wheelOptions}
+          validationError={validationError}
+          onNext={handleNext}
+        />
       )}
 
       {step === 3 && (
-        <div>
-          <h2>Step 3: Select Vehicle Type</h2>
-          <VehicleTypeSelector wheels={wheels} onSelect={setSelectedTypeId} />
-          {validationError && <p className="error">{validationError}</p>}
-          <button onClick={handleNext}>Next</button>
-        </div>
+        <Step3VehicleTypeSelector
+          wheels={wheels}
+          selectedTypeId={selectedTypeId}
+          setSelectedTypeId={setSelectedTypeId}
+          validationError={validationError}
+          onNext={handleNext}
+        />
       )}
 
       {step === 4 && (
-        <div>
-          <h2>Step 4: Select Vehicle Model</h2>
-          <VehicleList typeId={selectedTypeId} onSelect={setSelectedVehicleId} />
-          {validationError && <p className="error">{validationError}</p>}
-          <button onClick={handleNext}>Next</button>
-        </div>
+        <Step4VehicleList
+          selectedTypeId={selectedTypeId}
+          selectedVehicleId={selectedVehicleId}
+          setSelectedVehicleId={setSelectedVehicleId}
+          validationError={validationError}
+          onNext={handleNext}
+        />
       )}
 
       {step === 5 && (
-        <div>
-          <h2>Step 5: Select Date Range</h2>
-          <form onSubmit={handleBookingSubmit}>
-            <label>
-              Start Date <span className="required">*</span>:
-              <input
-                type="date"
-                value={startDate}
-                min={new Date().toISOString().split("T")[0]} // Disable past dates
-                onChange={(e) => {
-                  const selectedStartDate = e.target.value;
-                  setStartDate(selectedStartDate);
-                  if (endDate && selectedStartDate > endDate) {
-                    setEndDate(""); // Reset endDate if it's before the new startDate
-                  }
-                }}
-                required
-              />
-            </label>
-            <label>
-              End Date <span className="required">*</span>:
-              <input
-                type="date"
-                value={endDate}
-                min={startDate || new Date().toISOString().split("T")[0]} // Ensure endDate >= startDate
-                onChange={(e) => {
-                  const selectedEndDate = e.target.value;
-                  if (!startDate || selectedEndDate >= startDate) {
-                    setEndDate(selectedEndDate);
-                  } else {
-                    setValidationError("End date must be on or after the start date.");
-                  }
-                }}
-                required
-              />
-            </label>
-            {error && <p className="error">{error}</p>}
-            {validationError && <p className="error">{validationError}</p>}
-            <button type="submit" disabled={loading}>
-              {loading ? "Submitting..." : "Submit Booking"}
-            </button>
-          </form>
-        </div>
+        <Step5DatePicker
+          startDate={startDate}
+          setStartDate={setStartDate}
+          endDate={endDate}
+          setEndDate={setEndDate}
+          validationError={validationError}
+          setValidationError={setValidationError} 
+          error={error}
+          loading={loading}
+          onSubmit={handleBookingSubmit}
+        />
       )}
     </div>
   );
