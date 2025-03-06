@@ -20,20 +20,15 @@ export const submitBooking = async (bookingData) => {
       body: JSON.stringify(bookingData),
     });
 
-    // Check if the response is OK and if it has content
+    // Check if the response is OK
     if (!response.ok) {
-      const errorText = await response.text();
-      throw new Error(errorText || "Booking request failed.");
+      const errorData = await response.json(); // Parse the error response as JSON
+      throw new Error(errorData.error || "Booking request failed.");
     }
 
-    // Check if the response has content before calling .json()
-    const contentType = response.headers.get("content-type");
-    if (contentType && contentType.includes("application/json")) {
-      const data = await response.json();
-      return data;
-    } else {
-      throw new Error("Response is not JSON.");
-    }
+    // Parse the successful response as JSON
+    const data = await response.json();
+    return data;
   } catch (error) {
     console.error("Error submitting booking:", error.message);
     throw error; // Ensure error propagates

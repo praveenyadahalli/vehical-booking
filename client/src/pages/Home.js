@@ -89,6 +89,7 @@ const Home = () => {
       setStartDate("");
       setEndDate("");
     } catch (error) {
+      // Extract the error message from the error object
       setError(error.message || "Failed to submit booking. Please try again.");
     } finally {
       setLoading(false);
