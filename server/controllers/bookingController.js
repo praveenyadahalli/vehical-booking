@@ -1,4 +1,5 @@
 const pool = require('../db-connect.js');
+const { getErrorMessage } = require('../utils/errorMessages');
 
 // Submit a booking
 const submitBooking = async (req, res) => {
@@ -17,7 +18,7 @@ const submitBooking = async (req, res) => {
     const { rows } = await pool.query(availabilityQuery, [vehicle_id, parsedStartDate, parsedEndDate]);
 
     if (rows.length > 0) {
-      return res.status(400).json({ error: 'Vehicle is already booked for the selected dates' });
+      return res.status(400).json({ error: getErrorMessage('error.vehicle.booked') });
     }
 
     // Insert the booking
@@ -38,7 +39,7 @@ const submitBooking = async (req, res) => {
     res.json(formattedBooking);
   } catch (error) {
     console.error('Error submitting booking:', error);
-    res.status(500).json({ error: 'Failed to submit booking' });
+    res.status(500).json({ error: getErrorMessage('error.booking.failed') });
   }
 };
 
