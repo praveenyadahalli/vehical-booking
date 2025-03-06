@@ -33,6 +33,11 @@ const Home = () => {
     fetchWheels();
   }, []);
 
+  // Helper function to validate alphabetic input
+  const validateAlphabeticInput = (value) => {
+    return /^[A-Za-z]+$/.test(value); // Allows only letters (no numbers or special characters)
+  };
+
   // Handle "Next" button click
   const handleNext = () => {
     if (step === 1 && (!firstName.trim() || !lastName.trim())) {
@@ -59,15 +64,28 @@ const Home = () => {
   // Handle booking submission
   const handleBookingSubmit = async (e) => {
     e.preventDefault();
+
+    // Validate date range
     if (!startDate || !endDate) {
       setValidationError("Both start and end dates are required.");
       return;
     }
-  
+
+    const today = new Date().toISOString().split("T")[0];
+    if (startDate < today) {
+      setValidationError("Start date cannot be in the past.");
+      return;
+    }
+
+    if (endDate < startDate) {
+      setValidationError("End date must be on or after the start date.");
+      return;
+    }
+
     setLoading(true);
     setValidationError("");
     setError(null);
-  
+
     try {
       const bookingData = {
         first_name: firstName,
@@ -76,7 +94,7 @@ const Home = () => {
         start_date: startDate,
         end_date: endDate,
       };
-  
+
       const response = await submitBooking(bookingData);
       alert("Booking successful!");
       setStep(1); // Reset form after successful submission
@@ -89,7 +107,6 @@ const Home = () => {
       setStartDate("");
       setEndDate("");
     } catch (error) {
-      // Extract the error message from the error object
       setError(error.message || "Failed to submit booking. Please try again.");
     } finally {
       setLoading(false);
@@ -108,7 +125,13 @@ const Home = () => {
             <input
               type="text"
               value={firstName}
-              onChange={(e) => setFirstName(e.target.value)}
+              onChange={(e) => {
+                const value = e.target.value;
+                if ((validateAlphabeticInput(value) || value === "") && value.length <= 15) {
+                  setFirstName(value);
+                }
+              }}
+              maxLength={15} // Limit to 15 characters
               required
             />
           </label>
@@ -117,7 +140,13 @@ const Home = () => {
             <input
               type="text"
               value={lastName}
-              onChange={(e) => setLastName(e.target.value)}
+              onChange={(e) => {
+                const value = e.target.value;
+                if ((validateAlphabeticInput(value) || value === "") && value.length <= 15) {
+                  setLastName(value);
+                }
+              }}
+              maxLength={15} // Limit to 15 characters
               required
             />
           </label>
@@ -177,7 +206,14 @@ const Home = () => {
               <input
                 type="date"
                 value={startDate}
-                onChange={(e) => setStartDate(e.target.value)}
+                min={new Date().toISOString().split("T")[0]} // Disable past dates
+                onChange={(e) => {
+                  const selectedStartDate = e.target.value;
+                  setStartDate(selectedStartDate);
+                  if (endDate && selectedStartDate > endDate) {
+                    setEndDate(""); // Reset endDate if it's before the new startDate
+                  }
+                }}
                 required
               />
             </label>
@@ -186,11 +222,20 @@ const Home = () => {
               <input
                 type="date"
                 value={endDate}
-                onChange={(e) => setEndDate(e.target.value)}
+                min={startDate || new Date().toISOString().split("T")[0]} // Ensure endDate >= startDate
+                onChange={(e) => {
+                  const selectedEndDate = e.target.value;
+                  if (!startDate || selectedEndDate >= startDate) {
+                    setEndDate(selectedEndDate);
+                  } else {
+                    setValidationError("End date must be on or after the start date.");
+                  }
+                }}
                 required
               />
             </label>
             {error && <p className="error">{error}</p>}
+            {validationError && <p className="error">{validationError}</p>}
             <button type="submit" disabled={loading}>
               {loading ? "Submitting..." : "Submit Booking"}
             </button>
